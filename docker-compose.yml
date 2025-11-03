@@ -1,0 +1,87 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "work_mem=8MB"
+      - "-c"
+      - "maintenance_work_mem=64MB"
+      - "-c"
+      - "max_connections=100"
+      - "-c"
+      - "effective_cache_size=1GB"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    networks: [core]
+
+  hapi:
+    image: hapiproject/hapi:v6.10.0
+    environment:
+      - "spring.profiles.active=postgres"
+      - "spring.datasource.url=jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${HAPI_DB}"
+      - "spring.datasource.username=${HAPI_DB_USER}"
+      - "spring.datasource.password=${HAPI_DB_PASS}"
+      - "spring.datasource.driverClassName=org.postgresql.Driver"
+      - "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect"
+      - spring.jpa.hibernate.ddl-auto=update
+      - spring.flyway.enabled=true
+      - "JAVA_OPTS=${HAPI_JAVA_OPTS}"
+      - "hapi.fhir.server_address=http://localhost:${HAPI_HTTP_PORT}/fhir"
+      - "hapi.fhir.fhir_version=R4"
+    depends_on: [postgres]
+    ports:
+      - "${HAPI_HTTP_PORT}:8080"
+    networks: [core]
+
+  fastapi:
+    build:
+      context: ./fastapi
+    container_name: fastapi
+    restart: unless-stopped
+    environment:
+      API_TOKEN: ${API_TOKEN}
+      FHIR_BASE: "http://hapi:8080/fhir"
+    command: >
+      sh -c "uvicorn app:app --host 0.0.0.0 --port ${FASTAPI_PORT} --workers 1"
+    ports:
+      - "${FASTAPI_PORT}:${FASTAPI_PORT}"
+    depends_on: [hapi]
+    networks: [core]
+
+  superset:
+    image: apache/superset:4.0.2
+    container_name: superset
+    restart: unless-stopped
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
+      SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+      SUPERSET_ADMIN_USERNAME: ${SUPERSET_ADMIN_USERNAME}
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
+      SUPERSET_ADMIN_EMAIL: ${SUPERSET_ADMIN_EMAIL}
+      SUPERSET_DATABASE_URI: >
+        postgresql+psycopg2://${SUPERSET_DB_USER}:${SUPERSET_DB_PASS}@${POSTGRES_HOST}:${POSTGRES_PORT}/${SUPERSET_DB}
+    volumes:
+      - ./superset/superset_config.py:/app/pythonpath/superset_config.py
+      - superset_home:/app/superset_home
+    depends_on: [postgres]
+    ports:
+      - "${SUPERSET_PORT}:8088"
+    networks: [core]
+
+networks:
+  core: {}
+
+volumes:
+  pgdata: {}
+  superset_home: {}
