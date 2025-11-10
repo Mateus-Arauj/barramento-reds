@@ -57,14 +57,10 @@ services:
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
       FHIR_DB: ${FHIR_DB}
-      # nginx-proxy / acme labels
-      VIRTUAL_HOST: "api.damatlas.cloud"
-      LETSENCRYPT_HOST: "api.damatlas.cloud"
-      LETSENCRYPT_EMAIL: "${LETSENCRYPT_EMAIL}"
-      VIRTUAL_PORT: "${FASTAPI_PORT}"
     command: >
       sh -c "uvicorn app:app --host 0.0.0.0 --port ${FASTAPI_PORT} --workers 1"
-    # Note: remove published ports to expose only via proxy (nginx-proxy)
+    ports:
+      - "${FASTAPI_PORT}:${FASTAPI_PORT}"
     depends_on: [postgres]
     networks: [core]
 
@@ -80,43 +76,12 @@ services:
       SUPERSET_ADMIN_EMAIL: ${SUPERSET_ADMIN_EMAIL}
       SUPERSET_DATABASE_URI: >
         postgresql+psycopg2://${SUPERSET_DB_USER}:${SUPERSET_DB_PASS}@${POSTGRES_HOST}:${POSTGRES_PORT}/${SUPERSET_DB}
-      # Docker labels / env used by the nginx-proxy + acme companion to auto-configure
-      VIRTUAL_HOST: "superset.damatlas.cloud"
-      LETSENCRYPT_HOST: "superset.damatlas.cloud"
-      LETSENCRYPT_EMAIL: "${LETSENCRYPT_EMAIL}"
-      VIRTUAL_PORT: "8088"
     volumes:
       - ./superset/superset_config.py:/app/pythonpath/superset_config.py
       - superset_home:/app/superset_home
-    depends_on: [postgres]
-    # Don't publish the Superset port to host; proxy will route to container
-    networks: [core]
-  nginx-proxy:
-    image: jwilder/nginx-proxy:latest
-    container_name: nginx-proxy
-    restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - nginx_certs:/etc/nginx/certs:rw
-      - nginx_vhost:/etc/nginx/vhost.d:rw
-      - nginx_html:/usr/share/nginx/html:rw
-    networks: [core]
-
-  letsencrypt:
-    image: nginxproxy/acme-companion:2.8.0
-    container_name: nginx-letsencrypt
-    restart: unless-stopped
-    depends_on: [nginx-proxy]
-    environment:
-      DEFAULT_EMAIL: "${LETSENCRYPT_EMAIL}" # <- set via env or .env
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - nginx_certs:/etc/nginx/certs:rw
-      - nginx_vhost:/etc/nginx/vhost.d:rw
-      - nginx_html:/usr/share/nginx/html:rw
+      - "${SUPERSET_PORT}:8088"
+    depends_on: [postgres]
     networks: [core]
 
 networks:
@@ -125,8 +90,3 @@ networks:
 volumes:
   pgdata: {}
   superset_home: {}
-
-  # Volumes used by nginx-proxy (optional local copies)
-  nginx_certs: {}
-  nginx_vhost: {}
-  nginx_html: {}
