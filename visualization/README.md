@@ -33,30 +33,36 @@ Abra o notebook: `visualization/fhir_visualization.ipynb`
 ## Conteúdo do Notebook
 
 ### 1. Configuração
+
 - Importação de bibliotecas
 - Configuração da conexão com Mini HAPI
 - Funções auxiliares
 
 ### 2. Consulta de Pacientes
+
 - Busca todos os pacientes via API
 - Exibe em formato tabular (pandas DataFrame)
 - Estatísticas básicas
 
 ### 3. Visualizações de Pacientes
+
 - Distribuição por gênero (gráfico de pizza)
 - Status ativo/inativo (gráfico de barras)
 
 ### 4. Consulta de Observações
+
 - Busca observações de paciente específico
 - Exibe resultados de exames
 - Relaciona paciente ↔ observações
 
 ### 5. Análise Agregada
+
 - Distribuição de tipos de exames
 - Gráfico de barras horizontal
 - Estatísticas gerais
 
 ### 6. Demonstração Ponta a Ponta
+
 - Confirma que todo o fluxo está funcionando
 - Valida transformações
 - Próximos passos
@@ -71,6 +77,7 @@ Abra o notebook: `visualization/fhir_visualization.ipynb`
 ## Exemplos de Saída
 
 ### Tabela de Pacientes
+
 ```
 | ID         | Nome            | Gênero | Data Nascimento | Ativo |
 |------------|-----------------|--------|-----------------|-------|
@@ -79,6 +86,7 @@ Abra o notebook: `visualization/fhir_visualization.ipynb`
 ```
 
 ### Gráficos
+
 - Pizza: Distribuição de gêneros
 - Barras: Tipos de exames realizados
 - Barras: Status dos pacientes
@@ -86,6 +94,7 @@ Abra o notebook: `visualization/fhir_visualization.ipynb`
 ## Configuração
 
 Variáveis de ambiente (opcionais):
+
 ```bash
 export FHIR_BASE_URL="http://localhost:8000"
 export API_TOKEN="seu-token"
