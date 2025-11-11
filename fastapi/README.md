@@ -29,11 +29,33 @@ O Mini HAPI implementa os seguintes recursos FHIR R4:
 
 ```
 fastapi/
-├── app.py          # Endpoints FastAPI e rotas
-├── models.py       # Modelos SQLAlchemy (Patient, Observation)
-├── database.py     # Configuração do banco PostgreSQL
-├── validators.py   # Validadores Pydantic para FHIR
-├── services.py     # Lógica de negócio
+├── app/
+│   ├── __init__.py
+│   ├── main.py              # Aplicação FastAPI principal
+│   ├── config.py            # Configurações da aplicação
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── dependencies.py  # Dependências (autenticação)
+│   │   └── routes/
+│   │       ├── __init__.py
+│   │       ├── system.py    # Rotas de sistema
+│   │       ├── patient.py   # Rotas de Patient
+│   │       └── observation.py  # Rotas de Observation
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── database.py      # Modelos SQLAlchemy
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   ├── base.py          # Schemas FHIR base
+│   │   ├── patient.py       # Schema Patient
+│   │   └── observation.py   # Schema Observation
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── patient.py       # Lógica de negócio Patient
+│   │   └── observation.py   # Lógica de negócio Observation
+│   └── database/
+│       ├── __init__.py
+│       └── connection.py    # Configuração do PostgreSQL
 ├── requirements.txt
 └── Dockerfile
 ```

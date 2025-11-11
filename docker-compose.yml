@@ -58,7 +58,7 @@ services:
       POSTGRES_PORT: ${POSTGRES_PORT}
       FHIR_DB: ${FHIR_DB}
     command: >
-      sh -c "uvicorn app:app --host 0.0.0.0 --port ${FASTAPI_PORT} --workers 1"
+      sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${FASTAPI_PORT} --workers 1"
     ports:
       - "${FASTAPI_PORT}:${FASTAPI_PORT}"
     depends_on: [postgres]

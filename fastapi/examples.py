@@ -7,11 +7,11 @@ import json
 from datetime import datetime
 import os
 
-# Configurações
+               
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
 API_TOKEN = os.getenv("API_TOKEN", "troque-essa-chave")
 
-# Headers padrão
+                
 HEADERS = {
     "Content-Type": "application/json",
     "Authorization": f"Bearer {API_TOKEN}"
@@ -38,7 +38,7 @@ class MiniHAPIClient:
         response = requests.get(f"{self.base_url}/metadata")
         return response.json()
     
-    # ==================== Patient ====================
+                                                       
     
     def create_patient(self, patient_data: dict):
         """Cria um novo Patient"""
@@ -96,7 +96,7 @@ class MiniHAPIClient:
         response.raise_for_status()
         return response.json()
     
-    # ==================== Observation ====================
+                                                           
     
     def create_observation(self, observation_data: dict):
         """Cria uma nova Observation"""
@@ -141,15 +141,15 @@ def exemplo_completo():
     
     print("🚀 Iniciando exemplo de uso do Mini HAPI\n")
     
-    # Inicializa o cliente
+                          
     client = MiniHAPIClient()
     
-    # 1. Health Check
+                     
     print("1. Verificando saúde do servidor...")
     health = client.health_check()
     print(f"   Status: {health['status']}\n")
     
-    # 2. Criar um paciente
+                          
     print("2. Criando um paciente...")
     patient_data = {
         "resourceType": "Patient",
@@ -199,13 +199,13 @@ def exemplo_completo():
     print(f"   ✓ Paciente criado: {patient_id}")
     print(f"   Nome: {patient['name'][0]['given'][0]} {patient['name'][0]['family']}\n")
     
-    # 3. Buscar o paciente
+                          
     print("3. Buscando o paciente...")
     found_patient = client.get_patient(patient_id)
     print(f"   ✓ Paciente encontrado: {found_patient['id']}")
     print(f"   Versão: {found_patient['meta']['versionId']}\n")
     
-    # 4. Criar observação de pressão arterial
+                                             
     print("4. Criando observação de pressão arterial...")
     observation_pa = {
         "resourceType": "Observation",
@@ -265,7 +265,7 @@ def exemplo_completo():
     print(f"   Código: {obs1['code']['text']}")
     print(f"   Valor: {obs1['valueQuantity']['value']} {obs1['valueQuantity']['unit']}\n")
     
-    # 5. Criar observação de temperatura
+                                        
     print("5. Criando observação de temperatura...")
     observation_temp = {
         "resourceType": "Observation",
@@ -308,7 +308,7 @@ def exemplo_completo():
     print(f"   Código: {obs2['code']['text']}")
     print(f"   Valor: {obs2['valueQuantity']['value']} {obs2['valueQuantity']['unit']}\n")
     
-    # 6. Buscar todas as observações do paciente
+                                                
     print("6. Buscando observações do paciente...")
     observations_bundle = client.search_observations(patient=patient_id)
     print(f"   ✓ Total de observações: {observations_bundle['total']}")
@@ -317,12 +317,12 @@ def exemplo_completo():
         print(f"   - {obs['code']['text']}: {obs.get('valueQuantity', {}).get('value', 'N/A')}")
     print()
     
-    # 7. Buscar pacientes por nome
+                                  
     print("7. Buscando pacientes chamados Santos...")
     patients_bundle = client.search_patients(name="Santos")
     print(f"   ✓ Total de pacientes encontrados: {patients_bundle['total']}\n")
     
-    # 8. Atualizar paciente
+                           
     print("8. Atualizando dados do paciente...")
     patient_data["active"] = False
     patient_data["telecom"].append({
@@ -337,13 +337,13 @@ def exemplo_completo():
     print(f"   Ativo: {updated_patient['active']}")
     print(f"   Total de telecoms: {len(updated_patient['telecom'])}\n")
     
-    # 9. Deletar paciente
+                         
     print("9. Deletando paciente...")
     deleted = client.delete_patient(patient_id)
     if deleted:
         print(f"   ✓ Paciente deletado com sucesso\n")
     
-    # 10. Tentar buscar paciente deletado
+                                         
     print("10. Tentando buscar paciente deletado...")
     try:
         client.get_patient(patient_id)
@@ -362,7 +362,7 @@ def exemplo_bulk_observations():
     
     client = MiniHAPIClient()
     
-    # Criar paciente
+                    
     patient = client.create_patient({
         "resourceType": "Patient",
         "name": [{"family": "Teste", "given": ["Bulk"]}],
@@ -372,7 +372,7 @@ def exemplo_bulk_observations():
     patient_id = patient["id"]
     print(f"Paciente criado: {patient_id}\n")
     
-    # Criar várias observações
+                              
     observation_types = [
         ("85354-9", "Pressão Arterial", 120, "mmHg"),
         ("8310-5", "Temperatura", 36.5, "Cel"),
@@ -405,7 +405,7 @@ def exemplo_bulk_observations():
     
     print(f"\n✅ {len(observation_types)} observações criadas!")
     
-    # Buscar todas
+                  
     bundle = client.search_observations(patient=patient_id)
     print(f"\nTotal no servidor: {bundle['total']}")
 
@@ -417,13 +417,13 @@ if __name__ == "__main__":
     print()
     
     try:
-        # Executar exemplo completo
+                                   
         exemplo_completo()
         
         print("\n" + "=" * 60)
         print()
         
-        # Executar exemplo bulk
+                               
         exemplo_bulk_observations()
         
     except requests.exceptions.ConnectionError:

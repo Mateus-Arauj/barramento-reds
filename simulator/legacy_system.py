@@ -16,7 +16,7 @@ class LegacySystemSimulator:
         self.data_dir = data_dir
         os.makedirs(data_dir, exist_ok=True)
         
-        # Dados para geração aleatória
+                                      
         self.first_names_male = ["João", "Pedro", "Carlos", "José", "Paulo", "Lucas", "André", "Fernando", "Rafael", "Marcos"]
         self.first_names_female = ["Maria", "Ana", "Paula", "Juliana", "Carla", "Fernanda", "Beatriz", "Camila", "Letícia", "Gabriela"]
         self.last_names = ["Silva", "Santos", "Oliveira", "Souza", "Rodrigues", "Ferreira", "Alves", "Pereira", "Lima", "Costa"]
@@ -59,28 +59,28 @@ class LegacySystemSimulator:
         birth_day = random.randint(1, 28)
         
         patient = {
-            # Campos do sistema legado (formato proprietário)
+                                                             
             "PACIENTE_ID": self.generate_patient_id(),
             "NOME_COMPLETO": f"{first_name} {random.choice(self.last_names)} {last_name}",
             "DATA_NASCIMENTO": f"{birth_day:02d}/{birth_month:02d}/{birth_year}",
-            "SEXO": gender,  # M/F ao invés de male/female
+            "SEXO": gender,                               
             "CPF": self.generate_cpf(),
             "PRONTUARIO": f"PRONT-{random.randint(10000, 99999)}",
             
-            # Contato
+                     
             "TELEFONE_1": f"(11) 9{random.randint(1000, 9999)}-{random.randint(1000, 9999)}",
             "TELEFONE_2": f"(11) 3{random.randint(100, 999)}-{random.randint(1000, 9999)}" if random.random() > 0.5 else None,
             "EMAIL": f"{first_name.lower()}.{last_name.lower()}@email.com",
             
-            # Endereço
+                      
             "ENDERECO_RUA": f"Rua {random.choice(['das Flores', 'Principal', 'Central', 'do Comércio'])}, {random.randint(1, 999)}",
             "ENDERECO_BAIRRO": random.choice(["Centro", "Jardim América", "Vila Nova", "Parque Industrial"]),
             "ENDERECO_CIDADE": random.choice(self.cities),
             "ENDERECO_ESTADO": random.choice(self.states),
             "ENDERECO_CEP": f"{random.randint(10000, 99999)}-{random.randint(100, 999)}",
             
-            # Metadados do sistema legado
-            "STATUS_ATIVO": random.choice(["S", "N"]),  # S/N ao invés de true/false
+                                         
+            "STATUS_ATIVO": random.choice(["S", "N"]),                              
             "DATA_CADASTRO": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             "USUARIO_CADASTRO": f"USER{random.randint(1, 50)}",
         }
@@ -93,7 +93,7 @@ class LegacySystemSimulator:
         """
         exam = random.choice(self.exam_types)
         
-        # Valores de referência baseados no tipo de exame
+                                                         
         value_ranges = {
             "HEM001": (12.0, 16.0, "g/dL"),
             "GLI001": (70, 99, "mg/dL"),
@@ -108,12 +108,12 @@ class LegacySystemSimulator:
         }
         
         min_val, max_val, unit = value_ranges.get(exam["code"], (0, 100, ""))
-        value = round(random.uniform(min_val, max_val * 1.2), 2)  # Pode estar fora do normal
+        value = round(random.uniform(min_val, max_val * 1.2), 2)                             
         
         exam_date = datetime.now() - timedelta(days=random.randint(0, 30))
         
         result = {
-            # Campos do sistema legado
+                                      
             "EXAME_ID": f"EXM{random.randint(100000, 999999)}",
             "PACIENTE_ID": patient_id,
             "CODIGO_EXAME": exam["code"],
@@ -146,13 +146,13 @@ class LegacySystemSimulator:
             patient = self.generate_patient()
             patients.append(patient)
             
-            # Gera exames para este paciente
+                                            
             num_exams = random.randint(1, exams_per_patient)
             for _ in range(num_exams):
                 exam = self.generate_exam_result(patient["PACIENTE_ID"])
                 exams.append(exam)
         
-        # Salva em arquivos
+                           
         patients_file = os.path.join(self.data_dir, "patients_legacy.json")
         exams_file = os.path.join(self.data_dir, "exams_legacy.json")
         
@@ -206,7 +206,7 @@ def main():
     
     simulator = LegacySystemSimulator()
     
-    # Gera dataset
+                  
     patients, exams = simulator.generate_dataset(num_patients=50, exams_per_patient=5)
     
     print()

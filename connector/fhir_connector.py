@@ -10,8 +10,8 @@ from datetime import datetime
 from typing import Dict, List, Optional
 from pathlib import Path
 
-# Adiciona o diretório do simulador ao path
 sys.path.insert(0, str(Path(__file__).parent.parent / "simulator"))
+print(str(Path(__file__).parent.parent / "simulator"))
 from legacy_system import LegacySystemSimulator
 
 
@@ -49,25 +49,25 @@ class FHIRConnector:
         - CPF -> identifier
         - Etc.
         """
-        # Parseia o nome
+                        
         full_name = legacy_patient["NOME_COMPLETO"]
         name_parts = full_name.split()
-        given_names = name_parts[:-1]  # Todos exceto o último
-        family_name = name_parts[-1]  # Último nome
+        given_names = name_parts[:-1]                         
+        family_name = name_parts[-1]               
         
-        # Converte data de DD/MM/YYYY para YYYY-MM-DD
+                                                     
         birth_date_legacy = legacy_patient["DATA_NASCIMENTO"]
         day, month, year = birth_date_legacy.split('/')
         birth_date_fhir = f"{year}-{month}-{day}"
         
-        # Converte sexo M/F para male/female
+                                            
         gender_map = {"M": "male", "F": "female"}
         gender = gender_map.get(legacy_patient["SEXO"], "unknown")
         
-        # Converte STATUS_ATIVO S/N para true/false
+                                                   
         active = legacy_patient["STATUS_ATIVO"] == "S"
         
-        # Monta recurso FHIR Patient
+                                    
         fhir_patient = {
             "resourceType": "Patient",
             "identifier": [
@@ -113,7 +113,7 @@ class FHIRConnector:
             ]
         }
         
-        # Adiciona telecoms
+                           
         if legacy_patient.get("TELEFONE_1"):
             fhir_patient["telecom"].append({
                 "system": "phone",
@@ -148,7 +148,7 @@ class FHIRConnector:
         - STATUS_RESULTADO -> status
         - Etc.
         """
-        # Converte data de DD/MM/YYYY HH:MM para ISO 8601
+                                                         
         data_coleta = legacy_exam["DATA_COLETA"]
         try:
             dt = datetime.strptime(data_coleta, "%d/%m/%Y %H:%M")
@@ -156,7 +156,7 @@ class FHIRConnector:
         except:
             effective_datetime = datetime.now().isoformat() + "Z"
         
-        # Mapeia status do sistema legado para FHIR
+                                                   
         status_map = {
             "NORMAL": "final",
             "ALTERADO": "final",
@@ -164,7 +164,7 @@ class FHIRConnector:
         }
         status = status_map.get(legacy_exam["STATUS_RESULTADO"], "final")
         
-        # Determina interpretação baseada no status
+                                                   
         interpretation = None
         if legacy_exam["STATUS_RESULTADO"] == "NORMAL":
             interpretation = [{
@@ -191,7 +191,7 @@ class FHIRConnector:
                 }]
             }]
         
-        # Monta recurso FHIR Observation
+                                        
         fhir_observation = {
             "resourceType": "Observation",
             "identifier": [
@@ -234,11 +234,11 @@ class FHIRConnector:
             }
         }
         
-        # Adiciona interpretação se houver
+                                          
         if interpretation:
             fhir_observation["interpretation"] = interpretation
         
-        # Adiciona referenceRange
+                                 
         if legacy_exam.get("VALOR_REFERENCIA_MIN") and legacy_exam.get("VALOR_REFERENCIA_MAX"):
             fhir_observation["referenceRange"] = [
                 {
@@ -253,7 +253,7 @@ class FHIRConnector:
                 }
             ]
         
-        # Adiciona notas se houver observações
+                                              
         if legacy_exam.get("OBSERVACOES"):
             fhir_observation["note"] = [
                 {
@@ -330,11 +330,11 @@ class FHIRConnector:
         
         print(f"\n📋 Processando paciente: {patient_name} ({legacy_id})")
         
-        # 1. Transforma paciente para FHIR
+                                          
         print("  🔄 Transformando para FHIR Patient...")
         fhir_patient = self.transform_patient_to_fhir(legacy_patient)
         
-        # 2. Envia paciente para o servidor FHIR
+                                                
         print("  📤 Enviando Patient para Mini HAPI...")
         patient_fhir_id = self.send_patient_to_fhir(fhir_patient)
         
@@ -344,17 +344,17 @@ class FHIRConnector:
         
         print(f"  ✓ Patient criado com ID: {patient_fhir_id}")
         
-        # 3. Processa exames do paciente
+                                        
         if legacy_exams:
             print(f"  🔄 Processando {len(legacy_exams)} exames...")
             
             for exam in legacy_exams:
                 self.stats["observations_processed"] += 1
                 
-                # Transforma exame para FHIR Observation
+                                                        
                 fhir_observation = self.transform_exam_to_fhir(exam, patient_fhir_id)
                 
-                # Envia observation
+                                   
                 obs_id = self.send_observation_to_fhir(fhir_observation)
                 
                 if obs_id:
@@ -376,10 +376,10 @@ class FHIRConnector:
         print("=" * 70)
         print()
         
-        # Inicializa simulador para ler dados
+                                             
         simulator = LegacySystemSimulator()
         
-        # Extrai dados
+                      
         print("📥 EXTRAÇÃO - Lendo dados do sistema legado...")
         patients = simulator.get_patients()
         all_exams = simulator.get_exams()
@@ -392,23 +392,23 @@ class FHIRConnector:
         print(f"  ✓ {len(patients)} pacientes encontrados")
         print(f"  ✓ {len(all_exams)} exames encontrados")
         
-        # Processa cada paciente
+                                
         print()
         print("🔄 TRANSFORMAÇÃO E CARGA - Processando dados...")
         
         for patient in patients:
             self.stats["patients_processed"] += 1
             
-            # Busca exames deste paciente
+                                         
             patient_exams = [
                 exam for exam in all_exams 
                 if exam["PACIENTE_ID"] == patient["PACIENTE_ID"]
             ]
             
-            # Processa paciente e seus exames
+                                             
             self.process_patient(patient, patient_exams)
         
-        # Exibe estatísticas finais
+                                   
         print()
         print("=" * 70)
         print("📊 ESTATÍSTICAS FINAIS")
@@ -428,11 +428,11 @@ class FHIRConnector:
 
 def main():
     """Função principal"""
-    # Configurações (podem vir de variáveis de ambiente)
+                                                        
     FHIR_BASE_URL = os.getenv("FHIR_BASE_URL", "http://localhost:8000")
     API_TOKEN = os.getenv("API_TOKEN", "troque-essa-chave")
     
-    # Cria e executa o conector
+                               
     connector = FHIRConnector(FHIR_BASE_URL, API_TOKEN)
     connector.run_etl()
 

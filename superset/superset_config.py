@@ -8,17 +8,17 @@ SQLALCHEMY_DATABASE_URI = (
     f"{os.getenv('POSTGRES_PORT','5432')}/{os.getenv('SUPERSET_DB','superset')}"
 )
 
-# Performance/recursos reduzidos
+                                
 SUPERSET_WEBSERVER_WORKERS = 1
 GUNICORN_TIMEOUT = 120
 
-# Cache local simples
+                     
 CACHE_CONFIG = {"CACHE_TYPE": "SimpleCache"}
 DATA_CACHE_CONFIG = CACHE_CONFIG
 FILTER_STATE_CACHE_CONFIG = CACHE_CONFIG
 EXPLORE_FORM_DATA_CACHE_CONFIG = CACHE_CONFIG
 
-# Desabilitar features que exigem Celery no começo
+                                                  
 FEATURE_FLAGS = {
     "ALERT_REPORTS": False,
 }
