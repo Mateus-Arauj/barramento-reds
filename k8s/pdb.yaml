@@ -1,0 +1,11 @@
+# Pod Disruption Budget - Garante disponibilidade durante updates
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: fastapi-pdb
+  namespace: mdb-health
+spec:
+  minAvailable: 2 # Manter sempre pelo menos 2 pods rodando
+  selector:
+    matchLabels:
+      app: fastapi

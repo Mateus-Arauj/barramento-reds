@@ -1,0 +1,121 @@
+# StatefulSet para PostgreSQL (apenas para desenvolvimento/teste)
+# PRODUÇÃO: Use managed database (RDS, Cloud SQL, Azure Database)
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: mdb-health
+  labels:
+    app: postgres
+spec:
+  ports:
+    - port: 5432
+      name: postgres
+  clusterIP: None # Headless service para StatefulSet
+  selector:
+    app: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: mdb-health
+spec:
+  serviceName: postgres-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          ports:
+            - containerPort: 5432
+              name: postgres
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mdb-health-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mdb-health-secret
+                  key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          args:
+            - "postgres"
+            - "-c"
+            - "shared_buffers=256MB"
+            - "-c"
+            - "work_mem=8MB"
+            - "-c"
+            - "maintenance_work_mem=64MB"
+            - "-c"
+            - "max_connections=500"
+            - "-c"
+            - "effective_cache_size=1GB"
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1000m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - $(POSTGRES_USER)
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - $(POSTGRES_USER)
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: postgres-init-scripts
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi # Ajustar conforme necessário
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-scripts
+  namespace: mdb-health
+data:
+  01_init.sql: |
+    -- Script de inicialização do banco
+    CREATE DATABASE fhir_db;
+    CREATE DATABASE superset_db;
+
+    -- Criar usuário para Superset se necessário
+    CREATE USER superset_admin WITH PASSWORD 'CHANGE-THIS-PASSWORD';
+    GRANT ALL PRIVILEGES ON DATABASE superset_db TO superset_admin;

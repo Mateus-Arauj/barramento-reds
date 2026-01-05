@@ -1,0 +1,4 @@
+reports/
+*.pyc
+__pycache__/
+.locust_cache/

@@ -1,0 +1,32 @@
+# Kustomize - Gerenciamento de manifests
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: mdb-health
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - postgres-statefulset.yaml
+  - fastapi-deployment.yaml
+  - fastapi-service.yaml
+  - ingress.yaml
+  - hpa.yaml
+  - pdb.yaml
+  - network-policy.yaml
+
+# Labels comuns
+commonLabels:
+  project: mdb-health
+  managed-by: kustomize
+
+# Annotations comuns
+commonAnnotations:
+  documentation: https://github.com/Mateus-Arauj/mdb-health
+
+# Imagens (substituir pelo seu registry)
+images:
+  - name: mdb-health-fastapi
+    newName: your-registry/mdb-health-fastapi
+    newTag: latest

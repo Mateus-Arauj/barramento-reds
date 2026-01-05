@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mdb-health
+  labels:
+    name: mdb-health
+    environment: production

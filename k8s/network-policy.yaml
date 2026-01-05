@@ -1,0 +1,58 @@
+# Network Policy - Segurança de rede no cluster
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: fastapi-network-policy
+  namespace: mdb-health
+spec:
+  podSelector:
+    matchLabels:
+      app: fastapi
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    # Aceitar tráfego do Ingress Controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+
+    # Aceitar tráfego de outros pods FastAPI (health checks, etc)
+    - from:
+        - podSelector:
+            matchLabels:
+              app: fastapi
+      ports:
+        - protocol: TCP
+          port: 8000
+
+  egress:
+    # Permitir conexão ao PostgreSQL
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+
+    # Permitir DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+
+    # Permitir conexões externas (se necessário)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80

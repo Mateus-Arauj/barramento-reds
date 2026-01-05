@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mdb-health-config
+  namespace: mdb-health
+  labels:
+    app: mdb-health
+data:
+  # Database Configuration
+  POSTGRES_HOST: "postgres-service.mdb-health.svc.cluster.local"
+  POSTGRES_PORT: "5432"
+  FHIR_DB: "fhir_db"
+  SUPERSET_DB: "superset_db"
+
+  # Application Configuration
+  FASTAPI_PORT: "8000"
+
+  # Pool de conexões - Otimizado para K8s
+  DB_POOL_SIZE: "15" # Por worker
+  DB_MAX_OVERFLOW: "30"
+
+  # Workers por pod
+  UVICORN_WORKERS: "4"
+
+  # Logging
+  LOG_LEVEL: "info"

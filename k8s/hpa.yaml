@@ -1,0 +1,66 @@
+# Horizontal Pod Autoscaler - Escala automaticamente baseado em métricas
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fastapi-hpa
+  namespace: mdb-health
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fastapi
+
+  # Limites de pods
+  minReplicas: 3
+  maxReplicas: 10
+
+  # Métricas para auto-scaling
+  metrics:
+    # CPU - Escalar quando CPU média > 70%
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+
+    # Memória - Escalar quando memória média > 80%
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+  # Métricas customizadas (requer metrics server + prometheus adapter)
+  # - type: Pods
+  #   pods:
+  #     metric:
+  #       name: http_requests_per_second
+  #     target:
+  #       type: AverageValue
+  #       averageValue: "100"
+
+  # Comportamento de scaling
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300 # Esperar 5min antes de scale down
+      policies:
+        - type: Percent
+          value: 50 # Remover no máximo 50% dos pods por vez
+          periodSeconds: 60
+        - type: Pods
+          value: 2 # Remover no máximo 2 pods por vez
+          periodSeconds: 60
+      selectPolicy: Min # Usar a política mais conservadora
+
+    scaleUp:
+      stabilizationWindowSeconds: 60 # Esperar 1min antes de scale up
+      policies:
+        - type: Percent
+          value: 100 # Adicionar até 100% dos pods atuais
+          periodSeconds: 30
+        - type: Pods
+          value: 4 # Adicionar no máximo 4 pods por vez
+          periodSeconds: 30
+      selectPolicy: Max # Usar a política mais agressiva
