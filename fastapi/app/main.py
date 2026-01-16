@@ -7,7 +7,8 @@ from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 
 from app.database import init_db
-from app.api.routes import system, patient, observation
+from app.models import Patient, Observation, Practitioner, Encounter
+from app.api.routes import system, patient, observation, practitioner, encounter
 
 
 @asynccontextmanager
@@ -33,6 +34,8 @@ app = FastAPI(
 app.include_router(system.router)
 app.include_router(patient.router)
 app.include_router(observation.router)
+app.include_router(practitioner.router)
+app.include_router(encounter.router)
 
 
 @app.api_route("/fhir/{path:path}",
@@ -51,7 +54,7 @@ async def fhir_fallback(path: str):
                 {
                     "severity": "error",
                     "code": "not-supported",
-                    "diagnostics": f"Recurso '{path}' não implementado no Mini HAPI. Recursos suportados: Patient, Observation"
+                    "diagnostics": f"Recurso '{path}' não implementado no Mini HAPI. Recursos suportados: Patient, Observation, Practitioner, Encounter"
                 }
             ]
         }

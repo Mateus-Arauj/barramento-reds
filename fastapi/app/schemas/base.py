@@ -1,7 +1,7 @@
 """
 Schemas base para tipos FHIR comuns
 """
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional, List, Dict, Any
 
 
@@ -12,6 +12,7 @@ class Identifier(BaseModel):
     system: Optional[str] = None
     value: Optional[str] = None
     use: Optional[str] = None
+    type: Optional[Dict[str, Any]] = None
 
 
 class HumanName(BaseModel):
@@ -37,7 +38,7 @@ class ContactPoint(BaseModel):
 
 class Address(BaseModel):
     """
-    Endereço FHIR
+    Endereço FHIR adaptado para Brasil
     """
     use: Optional[str] = None
     type: Optional[str] = None
@@ -47,7 +48,16 @@ class Address(BaseModel):
     district: Optional[str] = None
     state: Optional[str] = None
     postalCode: Optional[str] = None
-    country: Optional[str] = None
+    country: Optional[str] = "BR"
+
+    @field_validator('postalCode')
+    @classmethod
+    def validate_cep(cls, v):
+        if v:
+            clean = v.replace("-", "").replace(".", "")
+            if len(clean) != 8 or not clean.isdigit():
+                raise ValueError('CEP deve ter 8 dígitos')
+        return v
 
 
 class Meta(BaseModel):
@@ -103,3 +113,39 @@ class Annotation(BaseModel):
     text: str
     authorString: Optional[str] = None
     time: Optional[str] = None
+
+
+class Coding(BaseModel):
+    """
+    Codificação FHIR - representa um código de um sistema de terminologia
+    """
+    system: Optional[str] = None
+    version: Optional[str] = None
+    code: Optional[str] = None
+    display: Optional[str] = None
+    userSelected: Optional[bool] = None
+
+
+class Duration(BaseModel):
+    """
+    Duração FHIR - quantidade de tempo
+    """
+    value: Optional[float] = None
+    comparator: Optional[str] = None
+    unit: Optional[str] = None
+    system: Optional[str] = None
+    code: Optional[str] = None
+
+
+class Attachment(BaseModel):
+    """
+    Anexo FHIR - conteúdo binário referenciado
+    """
+    contentType: Optional[str] = None
+    language: Optional[str] = None
+    data: Optional[str] = None
+    url: Optional[str] = None
+    size: Optional[int] = None
+    hash: Optional[str] = None
+    title: Optional[str] = None
+    creation: Optional[str] = None

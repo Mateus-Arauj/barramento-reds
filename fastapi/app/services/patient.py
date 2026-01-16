@@ -1,128 +1,108 @@
 """
-Serviço para manipulação de recursos FHIR Patient
+Service para recurso FHIR Patient
 """
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
-from fastapi import HTTPException
-from typing import Optional
-import uuid
 from datetime import datetime
+import uuid
 
-from app.models.database import Patient
+from app.repositories.patient import PatientRepository
+from app.models.patient import Patient
 from app.schemas.patient import PatientResource
 
 
 class PatientService:
     """
-    Serviço para operações com Patient
+    Serviço com lógica de negócio para recursos Patient
     """
-    
-    @staticmethod
-    def create_patient(db: Session, patient_data: PatientResource) -> Patient:
+
+    def __init__(self, repository: PatientRepository):
         """
-        Cria um novo recurso Patient no banco de dados
+        Inicializa o service com repository injetado
         """
-        if not patient_data.id:
-            patient_data.id = str(uuid.uuid4())
-        
-        if not patient_data.meta:
-            patient_data.meta = {}
-        
-        patient_dict = patient_data.model_dump(exclude_none=True)
-        patient_dict['meta'] = patient_dict.get('meta', {})
-        patient_dict['meta']['versionId'] = '1'
-        patient_dict['meta']['lastUpdated'] = datetime.utcnow().isoformat() + 'Z'
-        
+        self.repository = repository
+
+    def create(self, patient: PatientResource) -> Patient:
+        """
+        Cria um novo recurso Patient
+        """
+        patient_id = patient.id or str(uuid.uuid4())
+
+        patient_data = patient.model_dump(exclude_none=True, by_alias=True)
+        patient_data["id"] = patient_id
+        patient_data["meta"] = {
+            "versionId": "1",
+            "lastUpdated": datetime.utcnow().isoformat() + "Z"
+        }
+
         db_patient = Patient(
-            id=patient_data.id,
-            identifier=patient_dict.get('identifier'),
-            active=str(patient_dict.get('active', '')).lower() if patient_dict.get('active') is not None else None,
-            name=patient_dict.get('name'),
-            telecom=patient_dict.get('telecom'),
-            gender=patient_dict.get('gender'),
-            birth_date=patient_dict.get('birthDate'),
-            address=patient_dict.get('address'),
-            meta=patient_dict['meta'],
-            resource_json=patient_dict
+            id=patient_id,
+            identifier=patient_data.get("identifier"),
+            active=str(patient.active) if patient.active is not None else None,
+            name=patient_data.get("name"),
+            telecom=patient_data.get("telecom"),
+            gender=patient.gender,
+            birth_date=patient.birthDate,
+            address=patient_data.get("address"),
+            meta=patient_data.get("meta"),
+            resource_json=patient_data
         )
-        
-        try:
-            db.add(db_patient)
-            db.commit()
-            db.refresh(db_patient)
-            return db_patient
-        except IntegrityError:
-            db.rollback()
-            raise HTTPException(status_code=409, detail=f"Patient with id {patient_data.id} already exists")
-    
-    @staticmethod
-    def get_patient(db: Session, patient_id: str) -> Optional[Patient]:
+
+        return self.repository.create(db_patient)
+
+    def get_by_id(self, patient_id: str) -> Patient:
         """
-        Busca um Patient por ID
+        Recupera um Patient por ID
         """
-        patient = db.query(Patient).filter(Patient.id == patient_id).first()
-        if not patient:
-            raise HTTPException(status_code=404, detail=f"Patient/{patient_id} not found")
-        return patient
-    
-    @staticmethod
-    def update_patient(db: Session, patient_id: str, patient_data: PatientResource) -> Patient:
+        return self.repository.get_by_id_or_404(patient_id)
+
+    def update(self, patient_id: str, patient: PatientResource) -> Patient:
         """
         Atualiza um Patient existente
         """
-        db_patient = PatientService.get_patient(db, patient_id)
-        
-        patient_dict = patient_data.model_dump(exclude_none=True)
-        patient_dict['id'] = patient_id
-        
-        current_version = int(db_patient.meta.get('versionId', 1))
-        patient_dict['meta'] = patient_dict.get('meta', {})
-        patient_dict['meta']['versionId'] = str(current_version + 1)
-        patient_dict['meta']['lastUpdated'] = datetime.utcnow().isoformat() + 'Z'
-        
-        db_patient.identifier = patient_dict.get('identifier')
-        db_patient.active = str(patient_dict.get('active', '')).lower() if patient_dict.get('active') is not None else None
-        db_patient.name = patient_dict.get('name')
-        db_patient.telecom = patient_dict.get('telecom')
-        db_patient.gender = patient_dict.get('gender')
-        db_patient.birth_date = patient_dict.get('birthDate')
-        db_patient.address = patient_dict.get('address')
-        db_patient.meta = patient_dict['meta']
-        db_patient.resource_json = patient_dict
-        
-        db.commit()
-        db.refresh(db_patient)
-        return db_patient
-    
-    @staticmethod
-    def delete_patient(db: Session, patient_id: str) -> None:
+        db_patient = self.repository.get_by_id_or_404(patient_id)
+
+        patient_data = patient.model_dump(exclude_none=True, by_alias=True)
+        patient_data["id"] = patient_id
+
+        current_version = 1
+        if db_patient.meta and "versionId" in db_patient.meta:
+            current_version = int(db_patient.meta["versionId"]) + 1
+
+        patient_data["meta"] = {
+            "versionId": str(current_version),
+            "lastUpdated": datetime.utcnow().isoformat() + "Z"
+        }
+
+        db_patient.identifier = patient_data.get("identifier")
+        db_patient.active = str(patient.active) if patient.active is not None else None
+        db_patient.name = patient_data.get("name")
+        db_patient.telecom = patient_data.get("telecom")
+        db_patient.gender = patient.gender
+        db_patient.birth_date = patient.birthDate
+        db_patient.address = patient_data.get("address")
+        db_patient.meta = patient_data.get("meta")
+        db_patient.resource_json = patient_data
+
+        return self.repository.update(db_patient)
+
+    def delete(self, patient_id: str) -> None:
         """
-        Deleta um Patient
+        Remove um Patient
         """
-        db_patient = PatientService.get_patient(db, patient_id)
-        db.delete(db_patient)
-        db.commit()
-    
-    @staticmethod
-    def search_patients(
-        db: Session,
-        name: Optional[str] = None,
-        gender: Optional[str] = None,
-        birthdate: Optional[str] = None,
+        self.repository.delete_by_id(patient_id, "Patient")
+
+    def search(
+        self,
+        name: str = None,
+        gender: str = None,
+        birthdate: str = None,
         limit: int = 50
-    ) -> list[Patient]:
+    ) -> list:
         """
         Busca Patients com filtros
         """
-        query = db.query(Patient)
-        
-        if name:
-            query = query.filter(Patient.name.op('@>')(f'[{{"family": "{name}"}}]'))
-        
-        if gender:
-            query = query.filter(Patient.gender == gender)
-        
-        if birthdate:
-            query = query.filter(Patient.birth_date == birthdate)
-        
-        return query.limit(limit).all()
+        return self.repository.search(
+            name=name,
+            gender=gender,
+            birthdate=birthdate,
+            limit=limit
+        )
