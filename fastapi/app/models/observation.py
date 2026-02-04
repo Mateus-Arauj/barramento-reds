@@ -40,7 +40,17 @@ class Observation(Base, TimestampMixin):
     value_datetime = Column(String(50))
     value_period = Column(JSON)
 
+    performer = Column(JSON)
+    encounter_reference = Column(String(255))
     interpretation = Column(JSON)
+    body_site = Column(JSON)
+    method = Column(JSON)
+    specimen = Column(JSON)
+    device = Column(JSON)
+    reference_range = Column(JSON)
+    has_member = Column(JSON)
+    derived_from = Column(JSON)
+    component = Column(JSON)
     note = Column(JSON)
 
     meta = Column(JSON)
