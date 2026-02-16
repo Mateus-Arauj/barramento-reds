@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
     Gerencia o ciclo de vida da aplicação
     Inicializa o banco de dados na startup
     """
-    print("🚀 Iniciando Mini HAPI Server (BR Core)...")
+    print("🚀 Iniciando Mini HAPI Server...")
     init_db()
     print("✓ Banco de dados inicializado")
     print(f"✓ Recursos FHIR suportados: {', '.join(SUPPORTED_RESOURCES)}")
@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Mini HAPI - FHIR Server (BR Core)",
+    title="barramento reds- FHIR Server",
     description="Servidor FHIR simplificado com perfil brasileiro (BR Core). "
                 "Suporta Patient, Observation, Practitioner, Encounter, "
                 "Organization, Location, Condition, Procedure, "
@@ -56,8 +56,6 @@ app.include_router(patient.router)
 app.include_router(observation.router)
 app.include_router(practitioner.router)
 app.include_router(encounter.router)
-
-# Novos recursos BR Core
 app.include_router(organization.router)
 app.include_router(location.router)
 app.include_router(condition.router)
