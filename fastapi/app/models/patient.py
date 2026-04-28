@@ -23,6 +23,23 @@ class Patient(Base, TimestampMixin):
     gender = Column(String(20))
     birth_date = Column(String(20))
     address = Column(JSON)
+    marital_status = Column(JSON)
+    deceased_boolean = Column(String(10))
+    deceased_datetime = Column(String(50))
+    multiple_birth_boolean = Column(String(10))
+    multiple_birth_integer = Column(String(10))
+    contact = Column(JSON)
+    communication = Column(JSON)
+    general_practitioner = Column(JSON)
+    managing_organization = Column(JSON)
+
+    # Extensões BR Core
+    mother_name = Column(String(255))
+    father_name = Column(String(255))
+    nationality = Column(JSON)
+    race = Column(JSON)
+    ethnicity = Column(JSON)
+    birth_city = Column(JSON)
 
     meta = Column(JSON)
     resource_json = Column(JSON, nullable=False)

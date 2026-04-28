@@ -7,7 +7,8 @@ from datetime import datetime
 
 from .base import (
     Identifier, HumanName, ContactPoint, Address, Meta, CodeableConcept,
-    SYSTEM_CPF, SYSTEM_CNS
+    Reference, Period,
+    SYSTEM_CPF, SYSTEM_CNS, PROFILE_BR_PATIENT
 )
 
 
@@ -55,9 +56,24 @@ class PatientResource(BaseModel):
     telecom: Optional[List[ContactPoint]] = None
     gender: Optional[str] = None
     birthDate: Optional[str] = None
+    deceasedBoolean: Optional[bool] = None
+    deceasedDateTime: Optional[str] = None
     address: Optional[List[Address]] = None
+    maritalStatus: Optional[CodeableConcept] = None
+    multipleBirthBoolean: Optional[bool] = None
+    multipleBirthInteger: Optional[int] = None
+    contact: Optional[List[dict]] = None
+    communication: Optional[List[dict]] = None
+    generalPractitioner: Optional[List[Reference]] = None
+    managingOrganization: Optional[Reference] = None
+
+    # Extensões BR Core
     nationality: Optional[CodeableConcept] = None
     motherName: Optional[str] = None
+    fatherName: Optional[str] = None
+    race: Optional[CodeableConcept] = None
+    ethnicity: Optional[CodeableConcept] = None
+    birthCity: Optional[CodeableConcept] = None
 
     @field_validator('resourceType')
     @classmethod
@@ -101,6 +117,9 @@ class PatientResource(BaseModel):
         json_schema_extra = {
             "example": {
                 "resourceType": "Patient",
+                "meta": {
+                    "profile": [PROFILE_BR_PATIENT]
+                },
                 "identifier": [
                     {
                         "system": SYSTEM_CPF,

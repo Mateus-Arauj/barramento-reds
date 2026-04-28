@@ -42,6 +42,21 @@ class PatientService:
             gender=patient.gender,
             birth_date=patient.birthDate,
             address=patient_data.get("address"),
+            marital_status=patient_data.get("maritalStatus"),
+            deceased_boolean=str(patient.deceasedBoolean) if patient.deceasedBoolean is not None else None,
+            deceased_datetime=patient.deceasedDateTime,
+            multiple_birth_boolean=str(patient.multipleBirthBoolean) if patient.multipleBirthBoolean is not None else None,
+            multiple_birth_integer=str(patient.multipleBirthInteger) if patient.multipleBirthInteger is not None else None,
+            contact=patient_data.get("contact"),
+            communication=patient_data.get("communication"),
+            general_practitioner=patient_data.get("generalPractitioner"),
+            managing_organization=patient_data.get("managingOrganization"),
+            mother_name=patient.motherName,
+            father_name=patient.fatherName,
+            nationality=patient_data.get("nationality"),
+            race=patient_data.get("race"),
+            ethnicity=patient_data.get("ethnicity"),
+            birth_city=patient_data.get("birthCity"),
             meta=patient_data.get("meta"),
             resource_json=patient_data
         )
@@ -79,6 +94,21 @@ class PatientService:
         db_patient.gender = patient.gender
         db_patient.birth_date = patient.birthDate
         db_patient.address = patient_data.get("address")
+        db_patient.marital_status = patient_data.get("maritalStatus")
+        db_patient.deceased_boolean = str(patient.deceasedBoolean) if patient.deceasedBoolean is not None else None
+        db_patient.deceased_datetime = patient.deceasedDateTime
+        db_patient.multiple_birth_boolean = str(patient.multipleBirthBoolean) if patient.multipleBirthBoolean is not None else None
+        db_patient.multiple_birth_integer = str(patient.multipleBirthInteger) if patient.multipleBirthInteger is not None else None
+        db_patient.contact = patient_data.get("contact")
+        db_patient.communication = patient_data.get("communication")
+        db_patient.general_practitioner = patient_data.get("generalPractitioner")
+        db_patient.managing_organization = patient_data.get("managingOrganization")
+        db_patient.mother_name = patient.motherName
+        db_patient.father_name = patient.fatherName
+        db_patient.nationality = patient_data.get("nationality")
+        db_patient.race = patient_data.get("race")
+        db_patient.ethnicity = patient_data.get("ethnicity")
+        db_patient.birth_city = patient_data.get("birthCity")
         db_patient.meta = patient_data.get("meta")
         db_patient.resource_json = patient_data
 

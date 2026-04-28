@@ -111,9 +111,6 @@ class EncounterResource(BaseModel):
     serviceProvider: Optional[Reference] = None
     partOf: Optional[Reference] = None
 
-    class Config:
-        populate_by_name = True
-
     @field_validator('resourceType')
     @classmethod
     def validate_resource_type(cls, v):
@@ -133,6 +130,7 @@ class EncounterResource(BaseModel):
         return v
 
     class Config:
+        populate_by_name = True
         json_schema_extra = {
             "example": {
                 "resourceType": "Encounter",
