@@ -11,8 +11,6 @@ Este projeto implementa um **barramento de interoperabilidade em saúde** comple
 3. **Servidor FHIR** → Mini HAPI (FastAPI + PostgreSQL)
 4. **Visualização de dados** → Jupyter Notebook com análises
 
-> **Stack 100% Python**: Sem Java, simplificado e educacional para TCC.
-
 ## 🏗️ Arquitetura
 
 ```
