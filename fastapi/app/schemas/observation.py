@@ -4,7 +4,10 @@ Schema para validação de recursos FHIR Observation
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, Dict, Any
 
-from .base import Identifier, Meta, CodeableConcept, Quantity, Period, Reference, Annotation
+from .base import (
+    Identifier, Meta, CodeableConcept, Quantity, Period, Reference, Annotation,
+    SYSTEM_LOINC, PROFILE_BR_OBSERVATION
+)
 
 
 class ObservationResource(BaseModel):
@@ -35,7 +38,17 @@ class ObservationResource(BaseModel):
     valueDateTime: Optional[str] = None
     valuePeriod: Optional[Period] = None
     
+    performer: Optional[List[Reference]] = None
+    encounter: Optional[Reference] = None
     interpretation: Optional[List[CodeableConcept]] = None
+    bodySite: Optional[CodeableConcept] = None
+    method: Optional[CodeableConcept] = None
+    specimen: Optional[Reference] = None
+    device: Optional[Reference] = None
+    referenceRange: Optional[List[dict]] = None
+    hasMember: Optional[List[Reference]] = None
+    derivedFrom: Optional[List[Reference]] = None
+    component: Optional[List[dict]] = None
     note: Optional[List[Annotation]] = None
     
     @field_validator('resourceType')

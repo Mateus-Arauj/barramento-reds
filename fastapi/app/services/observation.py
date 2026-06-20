@@ -1,124 +1,129 @@
 """
-Serviço para manipulação de recursos FHIR Observation
+Service para recurso FHIR Observation
 """
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
-from fastapi import HTTPException
-from typing import Optional
-import uuid
 from datetime import datetime
+from fastapi import HTTPException
+import uuid
 
-from app.models.database import Patient, Observation
+from app.repositories.observation import ObservationRepository
+from app.repositories.patient import PatientRepository
+from app.models.observation import Observation
 from app.schemas.observation import ObservationResource
 
 
 class ObservationService:
     """
-    Serviço para operações com Observation
+    Serviço com lógica de negócio para recursos Observation
     """
-    
-    @staticmethod
-    def create_observation(db: Session, observation_data: ObservationResource) -> Observation:
+
+    def __init__(
+        self,
+        repository: ObservationRepository,
+        patient_repository: PatientRepository
+    ):
         """
-        Cria um novo recurso Observation no banco de dados
+        Inicializa o service com repositories injetados
         """
-        if not observation_data.id:
-            observation_data.id = str(uuid.uuid4())
-        
-        if not observation_data.meta:
-            observation_data.meta = {}
-        
-        observation_dict = observation_data.model_dump(exclude_none=True)
-        observation_dict['meta'] = observation_dict.get('meta', {})
-        observation_dict['meta']['versionId'] = '1'
-        observation_dict['meta']['lastUpdated'] = datetime.utcnow().isoformat() + 'Z'
-        
+        self.repository = repository
+        self.patient_repository = patient_repository
+
+    def _extract_patient_id(self, subject_reference: str) -> str:
+        """
+        Extrai o ID do paciente da referência FHIR
+        """
+        if subject_reference and "/" in subject_reference:
+            return subject_reference.split("/")[-1]
+        return subject_reference
+
+    def create(self, observation: ObservationResource) -> Observation:
+        """
+        Cria um novo recurso Observation
+        """
+        observation_id = observation.id or str(uuid.uuid4())
+
         patient_id = None
         subject_reference = None
-        if observation_data.subject and observation_data.subject.reference:
-            subject_reference = observation_data.subject.reference
-            if subject_reference.startswith("Patient/"):
-                patient_id = subject_reference.split("/", 1)[1]
-                
-                patient_exists = db.query(Patient).filter(Patient.id == patient_id).first()
-                if not patient_exists:
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Referenced patient {subject_reference} does not exist"
-                    )
-        
+        if observation.subject and observation.subject.reference:
+            subject_reference = observation.subject.reference
+            patient_id = self._extract_patient_id(subject_reference)
+
+            patient = self.patient_repository.get_by_id(patient_id)
+            if not patient:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Patient/{patient_id} not found"
+                )
+
+        observation_data = observation.model_dump(exclude_none=True, by_alias=True)
+        observation_data["id"] = observation_id
+        observation_data["meta"] = {
+            "versionId": "1",
+            "lastUpdated": datetime.utcnow().isoformat() + "Z"
+        }
+
         db_observation = Observation(
-            id=observation_data.id,
-            identifier=observation_dict.get('identifier'),
-            status=observation_dict.get('status'),
-            category=observation_dict.get('category'),
-            code=observation_dict.get('code'),
+            id=observation_id,
+            identifier=observation_data.get("identifier"),
+            status=observation.status,
+            category=observation_data.get("category"),
+            code=observation_data.get("code"),
             subject_reference=subject_reference,
             patient_id=patient_id,
-            effective_datetime=observation_dict.get('effectiveDateTime'),
-            effective_period=observation_dict.get('effectivePeriod'),
-            issued=observation_dict.get('issued'),
-            value_quantity=observation_dict.get('valueQuantity'),
-            value_codeable_concept=observation_dict.get('valueCodeableConcept'),
-            value_string=observation_dict.get('valueString'),
-            value_boolean=str(observation_dict.get('valueBoolean', '')).lower() if observation_dict.get('valueBoolean') is not None else None,
-            value_integer=observation_dict.get('valueInteger'),
-            value_range=observation_dict.get('valueRange'),
-            value_ratio=observation_dict.get('valueRatio'),
-            value_sampled_data=observation_dict.get('valueSampledData'),
-            value_time=observation_dict.get('valueTime'),
-            value_datetime=observation_dict.get('valueDateTime'),
-            value_period=observation_dict.get('valuePeriod'),
-            interpretation=observation_dict.get('interpretation'),
-            note=observation_dict.get('note'),
-            meta=observation_dict['meta'],
-            resource_json=observation_dict
+            effective_datetime=observation.effectiveDateTime,
+            effective_period=observation_data.get("effectivePeriod"),
+            issued=observation.issued,
+            value_quantity=observation_data.get("valueQuantity"),
+            value_codeable_concept=observation_data.get("valueCodeableConcept"),
+            value_string=observation.valueString,
+            value_boolean=str(observation.valueBoolean) if observation.valueBoolean is not None else None,
+            value_integer=observation.valueInteger,
+            value_range=observation_data.get("valueRange"),
+            value_ratio=observation_data.get("valueRatio"),
+            value_sampled_data=observation_data.get("valueSampledData"),
+            value_time=observation.valueTime,
+            value_datetime=observation.valueDateTime,
+            value_period=observation_data.get("valuePeriod"),
+            performer=observation_data.get("performer"),
+            encounter_reference=observation.encounter.reference if observation.encounter and observation.encounter.reference else None,
+            interpretation=observation_data.get("interpretation"),
+            body_site=observation_data.get("bodySite"),
+            method=observation_data.get("method"),
+            specimen=observation_data.get("specimen"),
+            device=observation_data.get("device"),
+            reference_range=observation_data.get("referenceRange"),
+            has_member=observation_data.get("hasMember"),
+            derived_from=observation_data.get("derivedFrom"),
+            component=observation_data.get("component"),
+            note=observation_data.get("note"),
+            meta=observation_data.get("meta"),
+            resource_json=observation_data
         )
-        
-        try:
-            db.add(db_observation)
-            db.commit()
-            db.refresh(db_observation)
-            return db_observation
-        except IntegrityError:
-            db.rollback()
-            raise HTTPException(
-                status_code=409,
-                detail=f"Observation with id {observation_data.id} already exists"
-            )
-    
-    @staticmethod
-    def get_observation(db: Session, observation_id: str) -> Optional[Observation]:
+
+        return self.repository.create(db_observation)
+
+    def get_by_id(self, observation_id: str) -> Observation:
         """
-        Busca uma Observation por ID
+        Recupera uma Observation por ID
         """
-        observation = db.query(Observation).filter(Observation.id == observation_id).first()
-        if not observation:
-            raise HTTPException(status_code=404, detail=f"Observation/{observation_id} not found")
-        return observation
-    
-    @staticmethod
-    def search_observations(
-        db: Session,
-        patient: Optional[str] = None,
-        status: Optional[str] = None,
-        date: Optional[str] = None,
+        return self.repository.get_by_id_or_404(observation_id)
+
+    def search(
+        self,
+        patient: str = None,
+        status: str = None,
+        date: str = None,
         limit: int = 50
-    ) -> list[Observation]:
+    ) -> list:
         """
         Busca Observations com filtros
         """
-        query = db.query(Observation)
-        
+        patient_id = None
         if patient:
-            if not patient.startswith("Patient/"):
-                patient = f"Patient/{patient}"
-            query = query.filter(Observation.subject_reference == patient)
-        
-        if status:
-            query = query.filter(Observation.status == status)
-        
-        if date:
-            query = query.filter(Observation.effective_datetime.like(f"{date}%"))
-        
-        return query.limit(limit).all()
+            patient_id = self._extract_patient_id(patient)
+
+        return self.repository.search(
+            patient_id=patient_id,
+            status=status,
+            date=date,
+            limit=limit
+        )
